@@ -1,61 +1,58 @@
 #include "main.h"
+#include <limits.h>
+#include <stdio.h>
 
 /**
- * _printf - formatted output conversion
+ * _printf - produces output according to a format
  *
- * @format: input string
+ * @format: the strings containing the character
  *
- * Return: number of chars printed
+ * Return: length of the formatted character
  */
 int _printf(const char *format, ...)
 {
-	unsigned int i = 0, r = 0, ibuf = 0;
+	int (*pfunc)(va_list, flags_t *);
+	const char *p;
 	va_list arguments;
-	int (*function)(va_list, char *, unsigned int);
-	char *buffer;
-	va_start(arguments, format), buffer = malloc(sizeof(char) * 1024);
-	if (!format || !buffer || (format[i] == '%' && !format[i + 1]))
+	flags_t flags = {0, 0, 0};
+
+	register int count = 0;
+
+	va_start(arguments, format);
+
+	if (!format || (format[0] + '%' && !format[1]))
 	{
 		return (-1);
 	}
-	if (!format[i])
+	if (format[0] == '%' && format[1] == ' ' && !format[2])
 	{
-		return (0);
+		return (-1);
 	}
-	for (i = 0; format && format[i]; i++)
+	for (p = format; *p; p++)
 	{
-		if (format[i] == '%')
+		if (*p == '%')
 		{
-			if (format[i = 1] == '\0')
+			p++;
+		}
+			if (*p == '%')
 			{
-				print_buf(buffer, ibuf), free(buffer), va_end(arguments);
-				return (-1);
+				count += _putchar('%');
+				continue;
 			}
-			else
+			while (get_flag(*p, &flags))
 			{
-				function = get_print_func(format, i + 1);
-				if (function == NULL)
-				{
-					if (format[i + 1] == ' ' && !format[i + 2])
-					{
-						return (-1);
-						handl_buf(buffer, format[i], ibuf), r++, i--;
-					}
-					else
-					{
-						r += function(arguments, buffer, ibuf);
-						i += ev_print_func(format, i + 1);
-					}
-				}i++;
+				p++;
 			}
+			pfunc = get_print(*p);
+			count += (pfunc)
+				? pfunc(arguments, &flags)
+				: _printf("%%%c", *p);
 		}
 		else
-		{
-			handl_buf(buffer, format[i], ibuf), r++;
-		}
-		for (ibuf = r; ibuf > 1024; ibuf -= 1024)
-			;
+			count += _putchar(*p);
 	}
-	print_buf(buffer, ibuf), free(buffer), va_end(arguments);
-	return (r);
+	_putchar(-1);
+	va_end(arguments);
+
+	return (count);
 }
